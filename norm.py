@@ -3,53 +3,62 @@ from tkinter import*
 import math
 import time
 import random
+from PIL import Image, ImageTk
+import tkinter as tk
+
 root=Tk()
 fr=Frame(root)
 root.geometry('800x600')
 canv=Canvas(root,bg='white')
 canv.pack(fill=BOTH,expand=1)
+  
 class ball():
- def __init__(self,x=40,y=450):
-  self.x=x
-  self.y=y
-  self.r=10
-  self.vx=0
-  self.vy=0
-  self.color=choice(['blue','green','brown'])
-  self.id=canv.create_oval(self.x-self.r,self.y-self.r,self.x+self.r,self.y+self.r,fill=self.color)
-  self.live=30
- def set_coords(self):
-  canv.coords(self.id,self.x-self.r,self.y-self.r,self.x+self.r,self.y+self.r)
+    def __init__(self, x=40, y=450, image_path="vors.png"):
+        self.x = x
+        self.y = y
+        self.r = 20
+        self.vx = 0
+        self.vy = 0
+        self.image = Image.open(image_path)
+        self.image = ImageTk.PhotoImage(self.image)
+        self.id = canv.create_image(self.x, self.y, image=self.image)
+        self.live = 10
 
- def move(self):
-  # Adjust the conditions to fit your desired space
-  if self.y <= 550:  # Change 550 to your desired upper limit
-   self.vy -= 1.2
-   self.y -= self.vy
-   self.x += self.vx
-   self.vx *= 0.99
-   self.set_coords()
-  else:
-   # Ball hits the ground
-   if self.vx ** 2 + self.vy ** 2 > 10:
-    self.vy = -self.vy / 2
-    self.vx = self.vx / 2
-    self.y = 549  # Adjust to prevent clipping
-   if self.live < 0:
-    balls.pop(balls.index(self))
-    canv.delete(self.id)
-   else:
-    self.live -= 1
-  # Reflect the ball off the walls if it goes out of bounds
-  if self.x > 780 or self.x < 20:  # Adjust to fit your desired space
-   self.vx = -self.vx / 2
-   self.x = min(max(self.x, 21), 779)  # Adjust to prevent clipping
+    def set_position(self, x, y):
+        self.x = x
+        self.y = y
+        canv.coords(self.id, self.x, self.y)
 
- def hittest(self,ob):
-  if abs(ob.x-self.x)<=(self.r+ob.r)and abs(ob.y-self.y)<=(self.r+ob.r):
-   return True
-  else:
-   return False
+    def move(self):
+        # Adjust the conditions to fit your desired space
+        if self.y <= 550:  # Change 550 to your desired upper limit
+            self.vy -= 1.2
+            self.y -= self.vy
+            self.x += self.vx
+            self.vx *= 0.99
+            self.set_position(self.x, self.y)
+        else:
+            # Ball hits the ground
+            if self.vx ** 2 + self.vy ** 2 > 10:
+                self.vy = -self.vy / 2
+                self.vx = self.vx / 2
+                self.y = 549  # Adjust to prevent clipping
+            if self.live < 0:
+                balls.pop(balls.index(self))
+                canv.delete(self.id)
+            else:
+                self.live -= 1
+        # Reflect the ball off the walls if it goes out of bounds
+        if self.x > 780 or self.x < 20:  # Adjust to fit your desired space
+            self.vx = -self.vx / 2
+            self.x = min(max(self.x, 21), 779)  # Adjust to prevent clipping
+
+    def hittest(self, ob):
+        if abs(ob.x-self.x)<=(self.r+ob.r)and abs(ob.y-self.y)<=(self.r+ob.r):
+            return True
+        else:
+            return False
+
 """
 Класс gun описывает пушку. 
 """
@@ -65,7 +74,7 @@ class gun():
   global balls,bullet
   bullet+=1
   new_ball=ball()
-  new_ball.r+=5
+  #new_ball.r+=5
   self.an=math.atan((event.y-new_ball.y)/(event.x-new_ball.x))
   new_ball.vx=self.f2_power*math.cos(self.an)
   new_ball.vy=-self.f2_power*math.sin(self.an)
@@ -87,6 +96,7 @@ class gun():
    canv.itemconfig(self.id,fill='orange')
   else:
    canv.itemconfig(self.id,fill='black')
+     
 """
 Класс target описывает цель. 
 """
@@ -101,14 +111,15 @@ class target():
   self.vx = rnd(-3, 3)  # Random horizontal velocity-скорость перемешения
   self.vy = rnd(-3, 3)  # Random vertical velocity- в разных осях координат
 
- def new_target(self):
+ def new_target(self,image_path="bab.png"):
   #здесь задание рандомного значения
   x = self.x = rnd(600, 780)
   y = self.y = rnd(300, 550)
   r = self.r = rnd(2, 50)
-  color = self.color = 'red'
-  canv.coords(self.id, x - r, y - r, x + r, y + r)
-  canv.itemconfig(self.id, fill=color)
+  self.image = Image.open(image_path)
+  self.image = ImageTk.PhotoImage(self.image)
+  self.id = canv.create_image(self.x, self.y, image=self.image)
+  #canv.itemconfig(self.id)
 
  def move(self):
   # Adjust the conditions to fit your desired space\Отрегулируйте условия в соответствии с вашим желаемым пространством
@@ -176,6 +187,10 @@ def new_game(event=''):
  canv.bind('<Button-1>', g1.fire2_start)
  canv.bind('<ButtonRelease-1>', g1.fire2_end)
  canv.bind('<Motion>', g1.targetting)
+ #canv.bind('<KeyPress-Left>', g1.left)
+ #canv.bind('<KeyPress-Right>', g1.right)
+
+
 
  while not check_targets():
   for b in balls:
